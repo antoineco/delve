@@ -4760,6 +4760,7 @@ func TestVariablesWithExternalLinking(t *testing.T) {
 func TestWatchpointsBasic(t *testing.T) {
 	skipOn(t, "not implemented", "freebsd")
 	skipOn(t, "not implemented", "386")
+	skipOn(t, "not implemented", "arm")
 	skipOn(t, "not implemented", "ppc64le")
 	skipOn(t, "not implemented", "riscv64")
 	skipOn(t, "not implemented", "loong64")
@@ -4817,6 +4818,7 @@ func TestWatchpointsBasic(t *testing.T) {
 func TestWatchpointCounts(t *testing.T) {
 	skipOn(t, "not implemented", "freebsd")
 	skipOn(t, "not implemented", "386")
+	skipOn(t, "not implemented", "arm")
 	skipOn(t, "see https://github.com/go-delve/delve/issues/2768", "windows")
 	skipOn(t, "not implemented", "ppc64le")
 	skipOn(t, "not implemented", "riscv64")
@@ -4937,6 +4939,7 @@ func TestDwrapStartLocation(t *testing.T) {
 func TestWatchpointStack(t *testing.T) {
 	skipOn(t, "not implemented", "freebsd")
 	skipOn(t, "not implemented", "386")
+	skipOn(t, "not implemented", "arm")
 	skipOn(t, "not implemented", "ppc64le")
 	skipOn(t, "not implemented", "riscv64")
 	skipOn(t, "not implemented", "loong64")
@@ -5094,6 +5097,8 @@ func TestNilPtrDerefInBreakInstr(t *testing.T) {
 		asmfile = "main_amd64.s"
 	case "arm64":
 		asmfile = "main_arm64.s"
+	case "arm":
+		asmfile = "main_arm.s"
 	case "386":
 		asmfile = "main_386.s"
 	case "ppc64le":
@@ -5627,6 +5632,7 @@ func TestWatchpointInterfaceNil(t *testing.T) {
 func TestStackwatchClearBug(t *testing.T) {
 	skipOn(t, "not implemented", "freebsd")
 	skipOn(t, "not implemented", "386")
+	skipOn(t, "not implemented", "arm")
 	skipOn(t, "not implemented", "ppc64le")
 	skipOn(t, "not implemented", "loong64")
 	skipOn(t, "see https://github.com/go-delve/delve/issues/2768", "windows")
