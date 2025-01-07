@@ -39,6 +39,7 @@ const _NT_FPREGSET elf.NType = 0x2
 // Refer https://man7.org/linux/man-pages/man5/elf.5.html
 const (
 	_EM_AARCH64          = 183
+	_EM_ARM              = 40
 	_EM_X86_64           = 62
 	_EM_RISCV            = 243
 	_EM_LOONGARCH        = 258
@@ -61,6 +62,9 @@ func linuxThreadsFromNotes(p *process, notes []*note, machineType elf.Machine) p
 			case _EM_AARCH64:
 				t := note.Desc.(*linuxPrStatusARM64)
 				lastThread = &linuxARM64Thread{linutil.ARM64Registers{Regs: &t.Reg}, t}
+			case _EM_ARM:
+				t := note.Desc.(*linuxPrStatusARM)
+				lastThread = &linuxARMThread{linutil.ARMRegisters{Regs: &t.Reg}, t}
 			case _EM_RISCV:
 				t := note.Desc.(*linuxPrStatusRISCV64)
 				lastThread = &linuxRISCV64Thread{linutil.RISCV64Registers{Regs: &t.Reg}, t}
@@ -78,6 +82,8 @@ func linuxThreadsFromNotes(p *process, notes []*note, machineType elf.Machine) p
 			switch th := lastThread.(type) {
 			case *linuxARM64Thread:
 				th.regs.Fpregs = note.Desc.(*linutil.ARM64PtraceFpRegs).Decode()
+			case *linuxARMThread:
+				th.regs.Fpregs = note.Desc.(*linutil.ARMPtraceFpRegs).Decode()
 			case *linuxRISCV64Thread:
 				th.regs.Fpregs = note.Desc.(*linutil.RISCV64PtraceFpRegs).Decode()
 			case *linuxLOONG64Thread:
@@ -97,6 +103,7 @@ func linuxThreadsFromNotes(p *process, notes []*note, machineType elf.Machine) p
 var supportedLinuxMachines = map[elf.Machine]string{
 	_EM_X86_64:    "amd64",
 	_EM_AARCH64:   "arm64",
+	_EM_ARM:       "arm",
 	_EM_RISCV:     "riscv64",
 	_EM_LOONGARCH: "loong64",
 }
@@ -191,6 +198,11 @@ type linuxARM64Thread struct {
 	t    *linuxPrStatusARM64
 }
 
+type linuxARMThread struct {
+	regs linutil.ARMRegisters
+	t    *linuxPrStatusARM
+}
+
 type linuxRISCV64Thread struct {
 	regs linutil.RISCV64Registers
 	t    *linuxPrStatusRISCV64
@@ -215,6 +227,13 @@ func (t *linuxARM64Thread) Registers() (proc.Registers, error) {
 	return &r, nil
 }
 
+func (t *linuxARMThread) Registers() (proc.Registers, error) {
+	var r linutil.ARMRegisters
+	r.Regs = t.regs.Regs
+	r.Fpregs = t.regs.Fpregs
+	return &r, nil
+}
+
 func (t *linuxRISCV64Thread) Registers() (proc.Registers, error) {
 	var r linutil.RISCV64Registers
 	r.Regs = t.regs.Regs
@@ -234,6 +253,10 @@ func (t *linuxAMD64Thread) ThreadID() int {
 }
 
 func (t *linuxARM64Thread) ThreadID() int {
+	return int(t.t.Pid)
+}
+
+func (t *linuxARMThread) ThreadID() int {
 	return int(t.t.Pid)
 }
 
@@ -328,6 +351,8 @@ func readNote(r io.ReadSeeker, machineType elf.Machine) (*note, error) {
 			note.Desc = &linuxPrStatusAMD64{}
 		case _EM_AARCH64:
 			note.Desc = &linuxPrStatusARM64{}
+		case _EM_ARM:
+			note.Desc = &linuxPrStatusARM{}
 		case _EM_RISCV:
 			note.Desc = &linuxPrStatusRISCV64{}
 		case _EM_LOONGARCH:
@@ -373,6 +398,8 @@ func readNote(r io.ReadSeeker, machineType elf.Machine) (*note, error) {
 	case _NT_FPREGSET:
 		if machineType == _EM_AARCH64 {
 			err = readFpregsetNote(note, &linutil.ARM64PtraceFpRegs{}, desc[:_ARM_FP_HEADER_START])
+		} else if machineType == _EM_ARM {
+			err = readFpregsetNote(note, &linutil.ARMPtraceFpRegs{}, desc[:_ARM_FP_HEADER_START])
 		} else if machineType == _EM_RISCV {
 			err = readFpregsetNote(note, &linutil.RISCV64PtraceFpRegs{}, desc)
 		} else if machineType == _EM_LOONGARCH {
@@ -500,6 +527,19 @@ type linuxPrStatusARM64 struct {
 	Pid, Ppid, Pgrp, Sid         int32
 	Utime, Stime, CUtime, CStime linuxCoreTimeval
 	Reg                          linutil.ARM64PtraceRegs
+	Fpvalid                      int32
+}
+
+// LinuxPrStatusARM is a copy of the prstatus kernel struct.
+type linuxPrStatusARM struct {
+	Siginfo                      linuxSiginfo
+	Cursig                       uint16
+	_                            [2]uint8
+	Sigpend                      uint64
+	Sighold                      uint64
+	Pid, Ppid, Pgrp, Sid         int32
+	Utime, Stime, CUtime, CStime linuxCoreTimeval
+	Reg                          linutil.ARMPtraceRegs
 	Fpvalid                      int32
 }
 
