@@ -349,6 +349,9 @@ func MustSupportFunctionCalls(t *testing.T, testBackend string) {
 			t.Skip("this version of Go does not support function calls")
 		}
 	}
+	if runtime.GOARCH == "arm" {
+		t.Skip(fmt.Errorf("%s does not support FunctionCall for now", runtime.GOARCH))
+	}
 
 	if runtime.GOARCH == "ppc64le" {
 		if !goversion.VersionAfterOrEqual(runtime.Version(), 1, 22) {
