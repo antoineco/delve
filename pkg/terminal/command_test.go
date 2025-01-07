@@ -1474,7 +1474,10 @@ func TestDisassPosCmd(t *testing.T) {
 		term.MustExec("continue")
 		out := term.MustExec("step-instruction")
 		t.Logf("%q\n", out)
-		if !strings.Contains(out, "call $runtime.Breakpoint") && !strings.Contains(out, "CALL runtime.Breakpoint(SB)") {
+		if !strings.Contains(out, "call $runtime.Breakpoint") &&
+			!strings.Contains(out, "CALL runtime.Breakpoint(SB)") &&
+			!strings.Contains(out, "BL runtime.Breakpoint(SB)") {
+
 			t.Errorf("output doesn't look like disassembly")
 		}
 	})

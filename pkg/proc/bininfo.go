@@ -138,6 +138,7 @@ var (
 	supportedLinuxArch = map[elf.Machine]bool{
 		elf.EM_X86_64:    true,
 		elf.EM_AARCH64:   true,
+		elf.EM_ARM:       true,
 		elf.EM_386:       true,
 		elf.EM_PPC64:     true,
 		elf.EM_RISCV:     true,
@@ -846,6 +847,8 @@ func NewBinaryInfo(goos, goarch string) *BinaryInfo {
 		r.Arch = AMD64Arch(goos)
 	case "arm64":
 		r.Arch = ARM64Arch(goos)
+	case "arm":
+		r.Arch = ARMArch(goos)
 	case "ppc64le":
 		r.Arch = PPC64LEArch(goos)
 	case "riscv64":
@@ -1938,7 +1941,7 @@ func (bi *BinaryInfo) setGStructOffsetElf(image *Image, exe *elf.File, wg *sync.
 		// tls.Memsz long. runtime.tlsg is an offset from the beginning of that block.
 		bi.gStructOffset = ^(memsz) + 1 + tlsg.Value // -tls.Memsz + tlsg.Value
 
-	case elf.EM_AARCH64:
+	case elf.EM_AARCH64, elf.EM_ARM:
 		tlsg := getSymbol(image, bi.logger, exe, "runtime.tls_g")
 		if tlsg == nil || tls == nil {
 			bi.gStructOffset = 2 * uint64(bi.Arch.PtrSize())
